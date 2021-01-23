@@ -35,7 +35,7 @@ sei.go_to(numero_sei=numero_sei)
 ```
 Verificar se um processo está aberto em uma área
 ```
-is_aberto = sei.is_processo_aberto(processo=processo,area=area)
+is_aberto,mensagem = sei.is_processo_aberto(processo=processo,area=area)
 ```
 Verificar se um processo está anexado a outro
 ```

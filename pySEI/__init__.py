@@ -40,18 +40,24 @@ class Sei:
             EC.presence_of_element_located((By.ID, "frmProtocoloPesquisaRapida")))
         formPesquisaRapida.submit()
 
-    def is_processo_aberto(self, processo, area):
+    def is_processo_aberto(self, processo, area=None):
         self.go_to(processo)
-        ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
-        self.driver.switch_to.frame(ifrVisualizacao)
-        informacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "divInformacao")))
-        regex = '(?im)^(.*)(' + area + ')[^0-9a-z](.*)$'
-        matches = match(regex, informacao.text)
-        aberto = False
-        if matches:
-            aberto = True
-        self.driver.switch_to.default_content()
-        return aberto
+        try:
+            ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+            self.driver.switch_to.frame(ifrVisualizacao)
+            informacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "divInformacao")))
+            mensagem = informacao.text
+            aberto = False
+            if area:
+                regex = '(?im)^(.*)(' + area + ')[^0-9a-z](.*)$'
+                matches = match(regex, mensagem)
+                if matches:
+                    aberto = True
+            self.driver.switch_to.default_content()
+        except:
+            aberto = None
+            mensagem = 'Impossível abrir mensagem do processo'
+        return aberto, mensagem
 
     def get_processo_anexador(self, processo):
         self.go_to(processo)
