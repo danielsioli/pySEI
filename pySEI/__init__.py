@@ -5,7 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from re import match
+from re import match,sub
 
 class Sei:
 
@@ -214,6 +214,10 @@ class Sei:
             ifrArvoreHtml = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
             self.driver.switch_to.frame(ifrArvoreHtml)
             documento_conteudo = self.driver.find_element_by_xpath('/html/body').get_attribute('innerHTML')
+            documento_conteudo = sub(r'\\n', '', documento_conteudo)  # retirar quebra de páginas
+            documento_conteudo = sub(r'\s\s+?', ' ', documento_conteudo)  # tira espaços duplos
+            documento_conteudo = sub(r'&nbsp;', ' ', documento_conteudo)  # tira espaços duplos
+            documento_conteudo = documento_conteudo.strip()  # retirar quebras de páginas que tenham restado
             return documento_conteudo
         except:
             raise Exception('Conteúdo do documento %s não encontrado.' % documento)
