@@ -14,6 +14,12 @@ class Sei:
         chrome_options.add_argument('--headless ' if headless else '' + '--enable-javascript')
         self.driver = webdriver.Chrome(executable_path=executable_path, options=chrome_options)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
     def start_driver(self, url, usuario, senha):
         self.driver.get(url)
 
