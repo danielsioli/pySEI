@@ -234,7 +234,7 @@ class Sei:
             ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
                 EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
             self.driver.switch_to.frame(ifrArvoreHtml)
-            return self.driver.driver.find_element_by_id(id)
+            return self.driver.find_element_by_id(id).text
         except:
             raise Exception('Conteúdo do documento %s não encontrado.' % documento)
         finally:
@@ -250,7 +250,7 @@ class Sei:
             ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
                 EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
             self.driver.switch_to.frame(ifrArvoreHtml)
-            return self.driver.driver.find_element_by_xpath(xpath)
+            return self.driver.find_element_by_xpath(xpath).text
         except:
             raise Exception('Conteúdo do documento %s não encontrado.' % documento)
         finally:
