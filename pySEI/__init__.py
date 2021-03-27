@@ -7,7 +7,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from re import match,sub
 from getpass import getpass
-from deprecated import deprecated
 
 class Sei:
 
@@ -54,20 +53,24 @@ class Sei:
             EC.presence_of_element_located((By.ID, "frmProtocoloPesquisaRapida")))
         formPesquisaRapida.submit()
 
-    def is_processo_aberto(self, processo=None, area=None):
+    def is_processo_aberto(self, area=None, processo=None):
         if processo:
             self.go_to(processo)
+        else:
+            self.driver.switch_to.default_content()
         try:
             ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
             self.driver.switch_to.frame(ifrVisualizacao)
             informacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "divInformacao")))
             mensagem = informacao.text
-            aberto = False
+            aberto = 'aberto' in mensagem
             if area:
                 regex = '(?im)^(.*)(' + area + ')[^0-9a-z](.*)$'
                 matches = match(regex, mensagem)
                 if matches:
                     aberto = True
+                else:
+                    aberto = False
             self.driver.switch_to.default_content()
         except:
             aberto = None
@@ -77,6 +80,8 @@ class Sei:
     def get_processo_anexador(self, processo=None):
         if processo:
             self.go_to(processo)
+        else:
+            self.driver.switch_to.default_content()
         ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
         self.driver.switch_to.frame(ifrVisualizacao)
         informacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "divInformacao")))
@@ -112,6 +117,7 @@ class Sei:
         return False
 
     def clicar_botao(self, botao):
+        self.driver.switch_to.default_content()
         ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
         self.driver.switch_to.frame(ifrVisualizacao)
         arvore = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "divArvoreAcoes")))
@@ -122,9 +128,14 @@ class Sei:
             if botao in img.get_attribute('title'):
                 b.click()
                 try:
-                    self.driver.switch_to.default_content()
+                    WebDriverWait(self.driver, 1).until(EC.alert_is_present(),
+                                                        'Timed out waiting for PA creation ' +
+                                                        'confirmation popup to appear.')
                 except:
-                    None
+                    try:
+                        self.driver.switch_to.default_content()
+                    except:
+                        None
                 return True
         return False
 
@@ -142,40 +153,29 @@ class Sei:
             None
         return alerta
 
-    def is_sobrestado(self, processo=None, area=None):
+    def is_sobrestado(self, area=None, processo=None):
         if processo:
             self.go_to(processo)
+        else:
+            self.driver.switch_to.default_content()
         ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
         self.driver.switch_to.frame(ifrVisualizacao)
         informacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "divInformacao")))
         sobrestado = 'sobrestado' in informacao.text
         mensagem = informacao.text
-        regex = '(?im)^(.*)(' + area + ')[^0-9a-z](.*)$'
-        matches = match(regex,informacao.text)
         self.driver.switch_to.default_content()
         if area:
+            regex = '(?im)^(.*)(' + area + ')[^0-9a-z](.*)$'
+            matches = match(regex, informacao.text)
             return sobrestado, matches != None
         else:
             return sobrestado, mensagem
 
-    @deprecated(version='1.1.14', reason='Use outro método')
-    def sobrestar_processo(self, processo, motivo):
-        self.go_to(processo)
-        if self.clicar_botao('Sobrestar Processo'):
-            ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
-            self.driver.switch_to.frame(ifrVisualizacao)
-            self.driver.find_element(By.ID, 'divOptSomenteSobrestar').click()
-            motivoField = self.driver.find_element(By.ID, 'txaMotivo')
-            motivoField.clear()
-            motivoField.send_keys(motivo)
-            self.driver.find_element(By.ID, 'sbmSalvar').click()
-            self.driver.switch_to.default_content()
-            return True
-        return False
-
     def sobrestar_processo(self, motivo, processo=None):
         if processo:
             self.go_to(processo)
+        else:
+            self.driver.switch_to.default_content()
         if self.clicar_botao('Sobrestar Processo'):
             ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
             self.driver.switch_to.frame(ifrVisualizacao)
@@ -196,47 +196,11 @@ class Sei:
             return True
         return False
 
-    @deprecated(version='1.1.14',reason='Use o outro método')
-    def publicar(self, documento, resumo_ementa, data_disponibilizacao, dou=False, secao=None, pagina=None):
-        self.go_to(documento)
-        if self.clicar_botao('Agendar Publicação'):
-            ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
-            self.driver.switch_to.frame(ifrVisualizacao)
-
-            resumo_ementa_text_field = self.driver.find_element(By.ID, 'txaResumo')
-            resumo_ementa_text_field.clear()
-            resumo_ementa_text_field.send_keys(resumo_ementa)
-
-            disponibilizacao = self.driver.find_element(By.ID, 'txtDisponibilizacao')
-            disponibilizacao.clear()
-            disponibilizacao.send_keys(data_disponibilizacao)
-
-            if dou:
-                select = Select(self.driver.find_element_by_id('selVeiculoIO'))
-                select.select_by_visible_text('DOU')
-
-                select = Select(WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "selSecaoIO"))))
-                WebDriverWait(self.driver, 3).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "option[value='" + secao if secao else '3' + "']")))
-                select.select_by_visible_text(secao if secao else '3')
-
-                pagina_text_field = self.driver.find_element(By.ID, 'txtPaginaIO')
-                pagina_text_field.clear()
-                pagina_text_field.send_keys(pagina if pagina else '')
-
-                disponibilizacao = self.driver.find_element(By.ID, 'txtDataIO')
-                disponibilizacao.clear()
-                disponibilizacao.send_keys(data_disponibilizacao)
-
-            self.driver.find_element_by_id('btnSalvar').click()
-
-            self.driver.switch_to.default_content()
-            return True
-        return False
-
     def publicar(self, resumo_ementa, data_disponibilizacao, documento=None, dou=False, secao=None, pagina=None):
         if documento:
             self.go_to(documento)
+        else:
+            self.driver.switch_to.default_content()
         if self.clicar_botao('Agendar Publicação'):
             ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
             self.driver.switch_to.frame(ifrVisualizacao)
@@ -275,6 +239,8 @@ class Sei:
     def get_conteudo_documento(self, documento=None):
         if documento:
             self.go_to(documento)
+        else:
+            self.driver.switch_to.default_content()
         try:
             ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
             self.driver.switch_to.frame(ifrVisualizacao)
@@ -291,26 +257,11 @@ class Sei:
         finally:
             self.driver.switch_to.default_content()
 
-    @deprecated(version='1.1.14',reason='Use outro método')
-    def get_documento_element_by_id(self,documento,id):
-        self.go_to(documento)
-
-        try:
-            ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
-            self.driver.switch_to.frame(ifrVisualizacao)
-            ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
-            self.driver.switch_to.frame(ifrArvoreHtml)
-            return self.driver.find_element_by_id(id).text
-        except:
-            raise Exception('Conteúdo do documento %s não encontrado.' % documento)
-        finally:
-            self.driver.switch_to.default_content()
-
     def get_documento_element_by_id(self,id, documento=None):
         if documento:
             self.go_to(documento)
+        else:
+            self.driver.switch_to.default_content()
         try:
             ifrVisualizacao = WebDriverWait(self.driver, 3).until(
                 EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
@@ -319,23 +270,6 @@ class Sei:
                 EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
             self.driver.switch_to.frame(ifrArvoreHtml)
             return self.driver.find_element_by_id(id).text
-        except:
-            raise Exception('Conteúdo do documento %s não encontrado.' % documento)
-        finally:
-            self.driver.switch_to.default_content()
-
-    @deprecated(version='1.1.14',reason='Use outro método')
-    def get_documento_element_by_xpath(self,documento,xpath):
-        self.go_to(documento)
-
-        try:
-            ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
-            self.driver.switch_to.frame(ifrVisualizacao)
-            ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
-            self.driver.switch_to.frame(ifrArvoreHtml)
-            return self.driver.find_element_by_xpath(xpath).text
         except:
             raise Exception('Conteúdo do documento %s não encontrado.' % documento)
         finally:
@@ -344,7 +278,8 @@ class Sei:
     def get_documento_element_by_xpath(self,xpath,documento=None):
         if documento:
             self.go_to(documento)
-
+        else:
+            self.driver.switch_to.default_content()
         try:
             ifrVisualizacao = WebDriverWait(self.driver, 3).until(
                 EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
