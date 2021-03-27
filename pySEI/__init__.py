@@ -5,7 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from re import match,sub
+from re import search,sub
 from getpass import getpass
 
 class Sei:
@@ -66,7 +66,7 @@ class Sei:
             aberto = 'aberto' in mensagem
             if area:
                 regex = '(?im)^(.*)(' + area + ')[^0-9a-z](.*)$'
-                matches = match(regex, mensagem)
+                matches = search(regex, mensagem)
                 if matches:
                     aberto = True
                 else:
@@ -166,7 +166,7 @@ class Sei:
         self.driver.switch_to.default_content()
         if area:
             regex = '(?im)^(.*)(' + area + ')[^0-9a-z](.*)$'
-            matches = match(regex, informacao.text)
+            matches = search(regex, informacao.text)
             return sobrestado, matches != None
         else:
             return sobrestado, mensagem
