@@ -7,7 +7,7 @@ with open(path.join(here, 'README.md')) as f:
 
 setup(
     name='pySEI',
-    version='1.0.15',
+    version='1.0.16',
     packages=find_packages(),
     url='https://github.com/danielsioli/pySEI',
     author='Daniel Oliveira',
@@ -17,7 +17,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     keywords='anatel,sei',
-    install_requires=['selenium'],
+    install_requires=['selenium','Deprecated'],
     include_package_data=True,
     classifiers=[
         # How mature is this project? Common values are
