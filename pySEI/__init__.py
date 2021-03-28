@@ -10,6 +10,8 @@ from getpass import getpass
 
 class Sei:
 
+    __area_inicial = None
+
     def __init__(self, headless=True,executable_path='chromedriver'):
         chrome_options = Options()
         chrome_options.add_argument('--headless ' if headless else '' + '--enable-javascript')
@@ -43,6 +45,7 @@ class Sei:
         alerta = self.fechar_alerta()
         if alerta:
             raise Exception(alerta)  # usuário ou senha inválido
+        self.__area_incial = self.get_area()
 
     def go_to(self, numero_sei):
         self.driver.switch_to.default_content()
@@ -293,6 +296,8 @@ class Sei:
         finally:
             self.driver.switch_to.default_content()
 
-    def close(self):
+    def close(self,voltar=True):
+        if voltar:
+            self.seleciona_area(self.__area_incial)
         self.driver.close()
         self.driver.quit()
