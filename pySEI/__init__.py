@@ -278,6 +278,24 @@ class Sei:
         finally:
             self.driver.switch_to.default_content()
 
+    def get_documento_elements_by_id(self,id, documento=None):
+        if documento:
+            self.go_to(documento)
+        else:
+            self.driver.switch_to.default_content()
+        try:
+            ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+            self.driver.switch_to.frame(ifrVisualizacao)
+            ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
+            self.driver.switch_to.frame(ifrArvoreHtml)
+            return self.driver.find_elements_by_id(id)
+        except:
+            raise Exception('Conteúdo do documento %s não encontrado.' % documento)
+        finally:
+            self.driver.switch_to.default_content()
+
     def get_documento_element_by_xpath(self,xpath,documento=None):
         if documento:
             self.go_to(documento)
@@ -291,6 +309,24 @@ class Sei:
                 EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
             self.driver.switch_to.frame(ifrArvoreHtml)
             return self.driver.find_element_by_xpath(xpath).text
+        except:
+            raise Exception('Conteúdo do documento %s não encontrado.' % documento)
+        finally:
+            self.driver.switch_to.default_content()
+
+    def get_documento_elements_by_xpath(self,xpath,documento=None):
+        if documento:
+            self.go_to(documento)
+        else:
+            self.driver.switch_to.default_content()
+        try:
+            ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+            self.driver.switch_to.frame(ifrVisualizacao)
+            ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
+            self.driver.switch_to.frame(ifrArvoreHtml)
+            return self.driver.find_elements_by_xpath(xpath)
         except:
             raise Exception('Conteúdo do documento %s não encontrado.' % documento)
         finally:
