@@ -14,9 +14,9 @@ class Sei:
     __windows_before = 0
     __windows_after = 0
 
-    def __init__(self, headless=True,executable_path='chromedriver'):
+    def __init__(self, headless=False,executable_path='chromedriver'):
         chrome_options = Options()
-        chrome_options.add_argument('--headless ' if headless else '' + '--enable-javascript')
+        chrome_options.add_argument('--headless ' if headless else '' + '--enable-javascript --window-size=1920x1080')
         self.driver = webdriver.Chrome(executable_path=executable_path, options=chrome_options)
 
     def __enter__(self):
