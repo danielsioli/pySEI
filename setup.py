@@ -7,7 +7,7 @@ with open(path.join(here, 'README.md')) as f:
 
 setup(
     name='pySEI',
-    version='1.0.20',
+    version='1.0.22',
     packages=find_packages(),
     url='https://github.com/danielsioli/pySEI',
     author='Daniel Oliveira',

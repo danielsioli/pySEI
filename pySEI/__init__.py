@@ -11,6 +11,8 @@ from getpass import getpass
 class Sei:
 
     __area_inicial = None
+    __windows_before = 0
+    __windows_after = 0
 
     def __init__(self, headless=True,executable_path='chromedriver'):
         chrome_options = Options()
@@ -48,13 +50,20 @@ class Sei:
         self.__area_incial = self.get_area()
 
     def go_to(self, numero_sei):
+        if self.__windows_after > self.__windows_before:
+            self.driver.close()
+            self.driver.switch_to.window(self.driver.window_handles[self.__windows_before - 1])
         self.driver.switch_to.default_content()
         pesquisa = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "txtPesquisaRapida")))
         pesquisa.clear()
         pesquisa.send_keys(str(numero_sei))
         formPesquisaRapida = WebDriverWait(self.driver, 3).until(
             EC.presence_of_element_located((By.ID, "frmProtocoloPesquisaRapida")))
+        self.__windows_before = len(self.driver.window_handles)
         formPesquisaRapida.submit()
+        self.__windows_after = len(self.driver.window_handles)
+        if self.__windows_after > self.__windows_before:
+            self.driver.switch_to.window(self.driver.window_handles[self.__windows_after - 1])
 
     def is_processo_aberto(self, area=None, processo=None):
         if processo:
@@ -266,12 +275,13 @@ class Sei:
         else:
             self.driver.switch_to.default_content()
         try:
-            ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
-            self.driver.switch_to.frame(ifrVisualizacao)
-            ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
-            self.driver.switch_to.frame(ifrArvoreHtml)
+            if (self.__windows_after == self.__windows_before):
+                ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+                self.driver.switch_to.frame(ifrVisualizacao)
+                ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
+                self.driver.switch_to.frame(ifrArvoreHtml)
             return self.driver.find_element_by_id(id).text
         except:
             raise Exception('Conteúdo do documento %s não encontrado.' % documento)
@@ -284,13 +294,15 @@ class Sei:
         else:
             self.driver.switch_to.default_content()
         try:
-            ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
-            self.driver.switch_to.frame(ifrVisualizacao)
-            ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
-            self.driver.switch_to.frame(ifrArvoreHtml)
-            return self.driver.find_elements_by_id(id)
+            if (self.__windows_after == self.__windows_before):
+                ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+                self.driver.switch_to.frame(ifrVisualizacao)
+                ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
+                self.driver.switch_to.frame(ifrArvoreHtml)
+            elements = self.driver.find_elements_by_id(id)
+            return [element.text for element in elements]
         except:
             raise Exception('Conteúdo do documento %s não encontrado.' % documento)
         finally:
@@ -302,12 +314,13 @@ class Sei:
         else:
             self.driver.switch_to.default_content()
         try:
-            ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
-            self.driver.switch_to.frame(ifrVisualizacao)
-            ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
-            self.driver.switch_to.frame(ifrArvoreHtml)
+            if(self.__windows_after == self.__windows_before):
+                ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+                self.driver.switch_to.frame(ifrVisualizacao)
+                ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
+                self.driver.switch_to.frame(ifrArvoreHtml)
             return self.driver.find_element_by_xpath(xpath).text
         except:
             raise Exception('Conteúdo do documento %s não encontrado.' % documento)
@@ -320,13 +333,15 @@ class Sei:
         else:
             self.driver.switch_to.default_content()
         try:
-            ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
-            self.driver.switch_to.frame(ifrVisualizacao)
-            ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
-            self.driver.switch_to.frame(ifrArvoreHtml)
-            return self.driver.find_elements_by_xpath(xpath)
+            if (self.__windows_after == self.__windows_before):
+                ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+                self.driver.switch_to.frame(ifrVisualizacao)
+                ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
+                self.driver.switch_to.frame(ifrArvoreHtml)
+            elements = self.driver.find_elements_by_xpath(xpath)
+            return [element.text for element in elements]
         except:
             raise Exception('Conteúdo do documento %s não encontrado.' % documento)
         finally:
