@@ -27,7 +27,7 @@ class Sei:
             if headless:
                 edge_options.add_argument('headless')
                 edge_options.add_argument('disable-gpu')
-            self.driver = Edge(options=edge_options)
+            self.driver = Edge(executable_path=executable_path,options=edge_options)
 
     def __enter__(self):
         return self
