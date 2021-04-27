@@ -7,6 +7,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from re import search,sub
 from getpass import getpass
+from msedge.selenium_tools import EdgeOptions
+from msedge.selenium_tools import Edge
 
 class Sei:
 
@@ -15,9 +17,17 @@ class Sei:
     __windows_after = 0
 
     def __init__(self, headless=False,executable_path='chromedriver'):
-        chrome_options = Options()
-        chrome_options.add_argument('--headless ' if headless else '' + '--enable-javascript --window-size=1920x1080')
-        self.driver = webdriver.Chrome(executable_path=executable_path, options=chrome_options)
+        if 'chromedriver' in executable_path:
+            chrome_options = Options()
+            chrome_options.add_argument('--headless ' if headless else '' + '--enable-javascript --window-size=1920x1080')
+            self.driver = webdriver.Chrome(executable_path=executable_path, options=chrome_options)
+        elif 'msedgedriver' in executable_path:
+            edge_options = EdgeOptions()
+            edge_options.use_chromium = True
+            if headless:
+                edge_options.add_argument('headless')
+                edge_options.add_argument('disable-gpu')
+            self.driver = Edge(options=edge_options)
 
     def __enter__(self):
         return self

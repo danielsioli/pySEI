@@ -1,6 +1,7 @@
 # pySEI
-Pacote para interagir com o SEI - Sistema Eletrônico de Informação. O pacote usa Selenium com o chromedriver.
+Pacote para interagir com o SEI - Sistema Eletrônico de Informação. O pacote usa Selenium com o chromedriver ou Ms Edge.
 O chromedriver pode ser obtido em https://chromedriver.chromium.org/downloads
+O Ms Edge Driver pode ser obtido em https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/
 
 ## Install 
 
