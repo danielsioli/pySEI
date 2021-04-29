@@ -19,11 +19,31 @@ class Sei:
     def __init__(self, headless=False,executable_path='chromedriver'):
         if 'chromedriver' in executable_path:
             chrome_options = Options()
-            chrome_options.add_argument('--headless ' if headless else '' + '--enable-javascript --window-size=1920x1080')
+            chrome_options.add_argument('--enable-javascript')
+            chrome_options.add_argument('--window-size=1440,900')
+            chrome_options.add_argument("--disable-extensions")
+            chrome_options.add_argument("--proxy-server='direct://'")
+            chrome_options.add_argument("--proxy-bypass-list=*")
+            chrome_options.add_argument("--start-maximized")
+            chrome_options.add_argument('--disable-dev-shm-usage')
+            chrome_options.add_argument('--no-sandbox')
+            chrome_options.add_argument('--ignore-certificate-errors')
+            if headless:
+                chrome_options.add_argument('--headless')
+                chrome_options.add_argument('--disable-gpu')
             self.driver = webdriver.Chrome(executable_path=executable_path, options=chrome_options)
         elif 'msedgedriver' in executable_path:
             edge_options = EdgeOptions()
             edge_options.use_chromium = True
+            edge_options.add_argument('enable-javascript')
+            edge_options.add_argument('window-size=1440,900')
+            edge_options.add_argument("disable-extensions")
+            edge_options.add_argument("proxy-server='direct://'")
+            edge_options.add_argument("proxy-bypass-list=*")
+            edge_options.add_argument("start-maximized")
+            edge_options.add_argument('disable-dev-shm-usage')
+            edge_options.add_argument('no-sandbox')
+            edge_options.add_argument('ignore-certificate-errors')
             if headless:
                 edge_options.add_argument('headless')
                 edge_options.add_argument('disable-gpu')
