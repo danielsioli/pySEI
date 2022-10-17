@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
@@ -9,6 +10,8 @@ from re import search,sub
 from getpass import getpass
 from msedge.selenium_tools import EdgeOptions
 from msedge.selenium_tools import Edge
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.microsoft import DriverManager as MsDriverManager
 
 class Sei:
 
@@ -16,7 +19,7 @@ class Sei:
     __windows_before = 0
     __windows_after = 0
 
-    def __init__(self, headless=False,executable_path='chromedriver'):
+    def __init__(self, headless=False, executable_path='chromedriver'):
         if 'chromedriver' in executable_path:
             chrome_options = Options()
             chrome_options.add_argument('--enable-javascript')
@@ -31,7 +34,7 @@ class Sei:
             if headless:
                 chrome_options.add_argument('--headless')
                 chrome_options.add_argument('--disable-gpu')
-            self.driver = webdriver.Chrome(executable_path=executable_path, options=chrome_options)
+            self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         elif 'msedgedriver' in executable_path:
             edge_options = EdgeOptions()
             edge_options.use_chromium = True
@@ -47,7 +50,7 @@ class Sei:
             if headless:
                 edge_options.add_argument('headless')
                 edge_options.add_argument('disable-gpu')
-            self.driver = Edge(executable_path=executable_path,options=edge_options)
+            self.driver = Edge(executable_path=MsDriverManager.install(), options=edge_options)
 
     def __enter__(self):
         return self
