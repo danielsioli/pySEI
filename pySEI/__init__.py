@@ -12,6 +12,7 @@ from msedge.selenium_tools import EdgeOptions
 from msedge.selenium_tools import Edge
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.microsoft import DriverManager as MsDriverManager
+import configparser
 
 class Sei:
 
@@ -19,7 +20,10 @@ class Sei:
     __windows_before = 0
     __windows_after = 0
 
-    def __init__(self, headless=False, executable_path='chromedriver'):
+    def __init__(self, headless: bool = False, executable_path: str = 'chromedriver', sei_versao: int = 4):
+        self.config = configparser.ConfigParser()
+        self.config.read_file(open(r'config.ini'))
+        self.sei = 'sei' + str(sei_versao)
         if 'chromedriver' in executable_path:
             chrome_options = Options()
             chrome_options.add_argument('--enable-javascript')
@@ -34,7 +38,7 @@ class Sei:
             if headless:
                 chrome_options.add_argument('--headless')
                 chrome_options.add_argument('--disable-gpu')
-            self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+            self.driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), options=chrome_options)
         elif 'msedgedriver' in executable_path:
             edge_options = EdgeOptions()
             edge_options.use_chromium = True
@@ -58,7 +62,7 @@ class Sei:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def start_driver(self, url, usuario=None, senha=None):
+    def start_driver(self, url: str, usuario:str = None, senha:str = None):
 
         if usuario == None:
             usuario = input('Digite o usuário: ')
@@ -67,10 +71,11 @@ class Sei:
 
         self.driver.get(url)
 
-        usuario_field = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "txtUsuario")))
+        usuario_field = WebDriverWait(self.driver, 3).until(
+            EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'usuario_textfield'))))
 
-        senha_field = self.driver.find_element_by_id('pwdSenha')
-        botao_acessar = self.driver.find_element_by_id('sbmLogin')
+        senha_field = self.driver.find_element_by_id(self.config.get(self.sei, 'senha_textfield'))
+        botao_acessar = self.driver.find_element_by_id(self.config.get(self.sei, 'acessar_botao'))
 
         usuario_field.clear()
         usuario_field.send_keys(usuario)
@@ -82,31 +87,34 @@ class Sei:
             raise Exception(alerta)  # usuário ou senha inválido
         self.__area_incial = self.get_area()
 
-    def go_to(self, numero_sei):
+    def go_to(self, numero_sei: str):
         if self.__windows_after > self.__windows_before:
             self.driver.close()
             self.driver.switch_to.window(self.driver.window_handles[self.__windows_before - 1])
         self.driver.switch_to.default_content()
-        pesquisa = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "txtPesquisaRapida")))
+        pesquisa = WebDriverWait(self.driver, 3).until(
+            EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'pesquisa_textfield'))))
         pesquisa.clear()
         pesquisa.send_keys(str(numero_sei))
         formPesquisaRapida = WebDriverWait(self.driver, 3).until(
-            EC.presence_of_element_located((By.ID, "frmProtocoloPesquisaRapida")))
+            EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'pesquisa_form'))))
         self.__windows_before = len(self.driver.window_handles)
         formPesquisaRapida.submit()
         self.__windows_after = len(self.driver.window_handles)
         if self.__windows_after > self.__windows_before:
             self.driver.switch_to.window(self.driver.window_handles[self.__windows_after - 1])
 
-    def is_processo_aberto(self, area=None, processo=None):
+    def is_processo_aberto(self, area:str = None, processo: str = None) -> (bool, str):
         if processo:
             self.go_to(processo)
         else:
             self.driver.switch_to.default_content()
         try:
-            ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+            ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
             self.driver.switch_to.frame(ifrVisualizacao)
-            informacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "divInformacao")))
+            informacao = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'documento_informacao'))))
             mensagem = informacao.text
             aberto = 'aberto' in mensagem
             if area:
@@ -122,51 +130,62 @@ class Sei:
             mensagem = 'Impossível abrir mensagem do processo'
         return aberto, mensagem
 
-    def get_processo_anexador(self, processo=None):
+    def get_processo_anexador(self, processo: str = None) -> str:
         if processo:
             self.go_to(processo)
         else:
             self.driver.switch_to.default_content()
-        ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+        ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+            EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
         self.driver.switch_to.frame(ifrVisualizacao)
-        informacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "divInformacao")))
+        informacao = WebDriverWait(self.driver, 3).until(
+            EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'documento_informacao'))))
         procAnex = None
         if 'Processo anexado ao processo' in informacao.text:
-            processoAnexador = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.XPATH, "//*[@id=\"divInformacao\"]/div/a")))
+            processoAnexador = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located(
+                (By.XPATH, r'//*[@id="' + self.config.get(self.sei, 'documento_informacao') + r'\"]/div/a')))
             procAnex = processoAnexador.text
         self.driver.switch_to.default_content()
         return procAnex
 
-    def get_area(self):
+    def get_area(self) -> str:
         self.driver.switch_to.default_content()
-        select = Select(self.driver.find_element_by_id('selInfraUnidades'))
-        return select.all_selected_options[0].text
+        areas_listbox = self.driver.find_element_by_id(self.config.get(self.sei, 'areas_listbox'))
+        if areas_listbox.tag_name == 'select':
+            select = Select(areas_listbox)
+            return select.all_selected_options[0].text
+        else:
+            return areas_listbox.get_attribute('innerHTML')
 
-    def seleciona_area(self, area):
+    def seleciona_area(self, area: str) -> bool:
         self.driver.switch_to.default_content()
-        select = Select(self.driver.find_element_by_id('selInfraUnidades'))
-        all_selected_options = select.all_selected_options
-        for option in all_selected_options:
-            if area == option.text:
-                return True
+        areas_listbox = self.driver.find_element_by_id(self.config.get(self.sei, 'areas_listbox'))
+        if areas_listbox.tag_name == 'select':
+            select = Select(areas_listbox)
+            all_selected_options = select.all_selected_options
+            for option in all_selected_options:
+                if area == option.text:
+                    return True
 
-        select = Select(self.driver.find_element_by_id('selInfraUnidades'))
-        options = select.options
-        for option in options:
-            if area == option.text:
-                select.select_by_visible_text(area)
-                Select(WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, 'selInfraUnidades'))))
-                return True
+            select = Select(self.driver.find_element_by_id(self.config.get(self.sei, 'areas_listbox')))
+            options = select.options
+            for option in options:
+                if area == option.text:
+                    select.select_by_visible_text(area)
+                    Select(WebDriverWait(self.driver, 3).until(
+                        EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'areas_listbox')))))
+                    return True
 
         return False
 
-    def clicar_botao(self, botao):
+    def clicar_botao(self, botao: str) -> bool:
         self.driver.switch_to.default_content()
-        ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+        ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+            EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
         self.driver.switch_to.frame(ifrVisualizacao)
-        arvore = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "divArvoreAcoes")))
-        botoes = arvore.find_elements(By.XPATH, '//*[@id=\"divArvoreAcoes\"]/a')
+        arvore = WebDriverWait(self.driver, 3).until(
+            EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'botoes'))))
+        botoes = arvore.find_elements(By.XPATH, r'//*[@id="' + self.config.get(self.sei, 'botoes') + r'"]/a')
 
         for b in botoes:
             img = b.find_element(By.XPATH, 'img')
@@ -184,7 +203,7 @@ class Sei:
                 return True
         return False
 
-    def fechar_alerta(self):
+    def fechar_alerta(self) -> str:
         alerta = None
         try:
             WebDriverWait(self.driver, 3).until(EC.alert_is_present(),
@@ -198,14 +217,16 @@ class Sei:
             None
         return alerta
 
-    def is_sobrestado(self, area=None, processo=None):
+    def is_sobrestado(self, area: str = None, processo: str = None) -> (bool, str):
         if processo:
             self.go_to(processo)
         else:
             self.driver.switch_to.default_content()
-        ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+        ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+            EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
         self.driver.switch_to.frame(ifrVisualizacao)
-        informacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "divInformacao")))
+        informacao = WebDriverWait(self.driver, 3).until(
+            EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'documento_informacao'))))
         sobrestado = 'sobrestado' in informacao.text
         mensagem = informacao.text
         self.driver.switch_to.default_content()
@@ -216,13 +237,14 @@ class Sei:
         else:
             return sobrestado, mensagem
 
-    def sobrestar_processo(self, motivo, processo=None):
+    def sobrestar_processo(self, motivo, processo: str = None) -> bool:
         if processo:
             self.go_to(processo)
         else:
             self.driver.switch_to.default_content()
         if self.clicar_botao('Sobrestar Processo'):
-            ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+            ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
             self.driver.switch_to.frame(ifrVisualizacao)
             self.driver.find_element(By.ID, 'divOptSomenteSobrestar').click()
             motivoField = self.driver.find_element(By.ID, 'txaMotivo')
@@ -233,7 +255,7 @@ class Sei:
             return True
         return False
 
-    def remover_sobrestamento(self, processo=None):
+    def remover_sobrestamento(self, processo: str = None) -> bool:
         if processo:
             self.go_to(processo)
         if self.clicar_botao('Remover Sobrestamento do Processo'):
@@ -241,13 +263,14 @@ class Sei:
             return True
         return False
 
-    def publicar(self, resumo_ementa, data_disponibilizacao, documento=None, dou=False, secao=None, pagina=None):
+    def publicar(self, resumo_ementa: str, data_disponibilizacao: str, documento: str = None, dou: str = False, secao: str = None, pagina:str = None) -> bool:
         if documento:
             self.go_to(documento)
         else:
             self.driver.switch_to.default_content()
         if self.clicar_botao('Agendar Publicação'):
-            ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+            ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
             self.driver.switch_to.frame(ifrVisualizacao)
 
             resumo_ementa_text_field = self.driver.find_element(By.ID, 'txaResumo')
@@ -262,9 +285,10 @@ class Sei:
                 select = Select(self.driver.find_element_by_id('selVeiculoIO'))
                 select.select_by_visible_text('DOU')
 
-                select = Select(WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "selSecaoIO"))))
-                WebDriverWait(self.driver, 3).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "option[value='" + secao if secao else '3' + "']")))
+                select = Select(
+                    WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "selSecaoIO"))))
+                WebDriverWait(self.driver, 3).until(EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, "option[value='" + secao if secao else '3' + "']")))
                 select.select_by_visible_text(secao if secao else '3')
 
                 pagina_text_field = self.driver.find_element(By.ID, 'txtPaginaIO')
@@ -281,15 +305,17 @@ class Sei:
             return True
         return False
 
-    def get_conteudo_documento(self, documento=None):
+    def get_conteudo_documento(self, documento: str = None):
         if documento:
             self.go_to(documento)
         else:
             self.driver.switch_to.default_content()
         try:
-            ifrVisualizacao = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+            ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
             self.driver.switch_to.frame(ifrVisualizacao)
-            ifrArvoreHtml = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
+            ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
             self.driver.switch_to.frame(ifrArvoreHtml)
             documento_conteudo = self.driver.find_element_by_xpath('/html/body').get_attribute('innerHTML')
             documento_conteudo = sub(r'\\n', '', documento_conteudo)  # retirar quebra de páginas
@@ -302,7 +328,7 @@ class Sei:
         finally:
             self.driver.switch_to.default_content()
 
-    def get_documento_element_by_id(self,id, documento=None):
+    def get_documento_element_by_id(self,id, documento: str = None) -> str:
         if documento:
             self.go_to(documento)
         else:
@@ -321,7 +347,7 @@ class Sei:
         finally:
             self.driver.switch_to.default_content()
 
-    def get_documento_elements_by_id(self,id, documento=None):
+    def get_documento_elements_by_id(self, id: str, documento: str = None) -> list:
         if documento:
             self.go_to(documento)
         else:
@@ -341,7 +367,7 @@ class Sei:
         finally:
             self.driver.switch_to.default_content()
 
-    def get_documento_element_by_xpath(self,xpath,documento=None):
+    def get_documento_element_by_xpath(self, xpath: str,documento: str = None) -> str:
         if documento:
             self.go_to(documento)
         else:
@@ -360,7 +386,7 @@ class Sei:
         finally:
             self.driver.switch_to.default_content()
 
-    def get_documento_elements_by_xpath(self,xpath,documento=None):
+    def get_documento_elements_by_xpath(self, xpath: str, documento: str = None) -> list:
         if documento:
             self.go_to(documento)
         else:
@@ -380,7 +406,7 @@ class Sei:
         finally:
             self.driver.switch_to.default_content()
 
-    def close(self,voltar=True):
+    def close(self, voltar: bool = True):
         if voltar:
             self.seleciona_area(self.__area_incial)
         self.driver.close()
