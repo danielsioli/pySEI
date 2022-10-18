@@ -104,6 +104,8 @@ class Sei:
         self.__windows_after = len(self.driver.window_handles)
         if self.__windows_after > self.__windows_before:
             self.driver.switch_to.window(self.driver.window_handles[self.__windows_after - 1])
+        WebDriverWait(self.driver, 3).until(
+            EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'pesquisa_textfield'))))
 
     def is_processo_aberto(self, area:str = None, processo: str = None) -> (bool, str):
         if processo:
@@ -160,7 +162,8 @@ class Sei:
 
     def seleciona_area(self, area: str) -> bool:
         self.driver.switch_to.default_content()
-        areas_listbox = self.driver.find_element_by_id(self.config.get(self.sei, 'areas_listbox'))
+        areas_listbox = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located(
+            (By.ID, self.config.get(self.sei, 'areas_listbox'))))
         if areas_listbox.tag_name == 'select':
             select = Select(areas_listbox)
             all_selected_options = select.all_selected_options
@@ -176,8 +179,21 @@ class Sei:
                     Select(WebDriverWait(self.driver, 3).until(
                         EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'areas_listbox')))))
                     return True
-
-        return False
+            return False
+        elif areas_listbox.tag_name == 'a':
+            self.driver.execute_script(areas_listbox.get_attribute('onclick'), areas_listbox)
+            nova_area = self.config.get(self.sei, 'areas_tabela')
+            areas_tabela = WebDriverWait(self.driver, 3).until(EC.presence_of_all_elements_located(
+                (By.XPATH, f"//*[@id=\"{nova_area}\"]/table/tbody/tr")))
+            if areas_listbox.text == area:
+                return True
+            for row in areas_tabela[1:]:
+                if area == row.find_element(By.XPATH, 'td[2]').text:
+                    row.click()
+                    break
+            areas_listbox = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located(
+                (By.ID, self.config.get(self.sei, 'areas_listbox'))))
+        return area == areas_listbox.text
 
     def clicar_botao(self, botao: str) -> bool:
         self.driver.switch_to.default_content()
@@ -248,11 +264,11 @@ class Sei:
             ifrVisualizacao = WebDriverWait(self.driver, 3).until(
                 EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
             self.driver.switch_to.frame(ifrVisualizacao)
-            self.driver.find_element(By.ID, 'divOptSomenteSobrestar').click()
-            motivoField = self.driver.find_element(By.ID, 'txaMotivo')
+            self.driver.find_element(By.ID, self.config.get(self.sei, 'somente_sobrestar_botao')).click()
+            motivoField = self.driver.find_element(By.ID, self.config.get(self.sei, 'motivo_sobrestar_textfield'))
             motivoField.clear()
             motivoField.send_keys(motivo)
-            self.driver.find_element(By.ID, 'sbmSalvar').click()
+            self.driver.find_element(By.ID, self.config.get(self.sei, 'salvar_sobrestamento_botao')).click()
             self.driver.switch_to.default_content()
             return True
         return False

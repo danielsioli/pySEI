@@ -60,7 +60,7 @@ is_sobrestado,is_na_area = sei.is_sobrestado(processo=processo, area=area)
 ```
 Sobrestar processo na área atual
 ```
-is_sobrestado = sei.sobrestar_processo(processo=processo)
+is_sobrestado = sei.sobrestar_processo(motivo='Quero sobrestar', processo=processo)
 ```
 Remover sobrestamento do processo na área atual
 ```
