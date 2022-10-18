@@ -22,7 +22,8 @@ class Sei:
 
     def __init__(self, headless: bool = False, executable_path: str = 'chromedriver', sei_versao: int = 4):
         self.config = configparser.ConfigParser()
-        self.config.read_file(open(r'config.ini'))
+        with open(r'config.ini') as f:
+            self.config.read_file(f)
         self.sei = 'sei' + str(sei_versao)
         if 'chromedriver' in executable_path:
             chrome_options = Options()
