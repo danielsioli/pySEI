@@ -229,12 +229,13 @@ class Sei:
             EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'documento_informacao'))))
         sobrestado = 'sobrestado' in informacao.text
         mensagem = informacao.text
-        self.driver.switch_to.default_content()
         if area:
             regex = '(?im)^(.*)(' + area + ')[^0-9a-z](.*)$'
             matches = search(regex, informacao.text)
+            self.driver.switch_to.default_content()
             return sobrestado, matches != None
         else:
+            self.driver.switch_to.default_content()
             return sobrestado, mensagem
 
     def sobrestar_processo(self, motivo, processo: str = None) -> bool:
