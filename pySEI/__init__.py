@@ -143,7 +143,7 @@ class Sei:
         procAnex = None
         if 'Processo anexado ao processo' in informacao.text:
             processoAnexador = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located(
-                (By.XPATH, r'//*[@id="' + self.config.get(self.sei, 'documento_informacao') + r'\"]/div/a')))
+                (By.XPATH, r'//*[@id="' + self.config.get(self.sei, 'documento_informacao') + r'"]/div/a')))
             procAnex = processoAnexador.text
         self.driver.switch_to.default_content()
         return procAnex
