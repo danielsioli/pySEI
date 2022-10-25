@@ -13,6 +13,11 @@ from msedge.selenium_tools import Edge
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.microsoft import DriverManager as MsDriverManager
 import configparser
+try:
+    import importlib.resources as pkg_resources
+except ImportError:
+    # Try backported to PY<37 `importlib_resources`.
+    import importlib_resources as pkg_resources
 
 class Sei:
 
@@ -22,7 +27,7 @@ class Sei:
 
     def __init__(self, headless: bool = False, executable_path: str = 'chromedriver', sei_versao: int = 4):
         self.config = configparser.ConfigParser()
-        with open(r'../config.ini') as f:
+        with pkg_resources.open_text(package='pySEI', resource='config.ini') as f:
             self.config.read_file(f)
         self.sei = 'sei' + str(sei_versao)
         if 'chromedriver' in executable_path:
@@ -86,7 +91,7 @@ class Sei:
         alerta = self.fechar_alerta()
         if alerta:
             raise Exception(alerta)  # usuário ou senha inválido
-        self.__area_incial = self.get_area()
+        self.__area_inicial = self.get_area()
 
     def go_to(self, numero_sei: str):
         if self.__windows_after > self.__windows_before:
@@ -434,7 +439,7 @@ class Sei:
             self.driver.switch_to.default_content()
 
     def close(self, voltar: bool = True):
-        if voltar:
-            self.seleciona_area(self.__area_incial)
+        if voltar and self.__area_inicial:
+            self.seleciona_area(self.__area_inicial)
         self.driver.close()
         self.driver.quit()

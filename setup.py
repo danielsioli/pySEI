@@ -7,8 +7,9 @@ with open(path.join(here, 'README.md')) as f:
 
 setup(
     name='pySEI',
-    version='1.2.0',
+    version='1.3.2',
     packages=find_packages(),
+    package_data={'': ['config.ini']},
     url='https://github.com/danielsioli/pySEI',
     author='Daniel Oliveira',
     author_email='danielsioli@gmail.com',
