@@ -181,11 +181,12 @@ class Sei:
                     return True
             return False
         elif areas_listbox.tag_name == 'a':
+            antiga_area = areas_listbox.get_attribute('innerHTML')
             self.driver.execute_script(areas_listbox.get_attribute('onclick'), areas_listbox)
-            nova_area = self.config.get(self.sei, 'areas_tabela')
+            nova_area_id = self.config.get(self.sei, 'areas_tabela')
             areas_tabela = WebDriverWait(self.driver, 3).until(EC.presence_of_all_elements_located(
-                (By.XPATH, f"//*[@id=\"{nova_area}\"]/table/tbody/tr")))
-            if areas_listbox.text == area:
+                (By.XPATH, f"//*[@id=\"{nova_area_id}\"]/table/tbody/tr")))
+            if antiga_area == area:
                 return True
             for row in areas_tabela[1:]:
                 if area == row.find_element(By.XPATH, 'td[2]').text:
@@ -193,7 +194,9 @@ class Sei:
                     break
             areas_listbox = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located(
                 (By.ID, self.config.get(self.sei, 'areas_listbox'))))
-        return area == areas_listbox.text
+            print(f"area = {area}, areas_listbox.text = {areas_listbox.get_attribute('innerHTML')}")
+            return area == areas_listbox.get_attribute('innerHTML')
+        return False
 
     def clicar_botao(self, botao: str) -> bool:
         self.driver.switch_to.default_content()
@@ -260,6 +263,9 @@ class Sei:
             self.go_to(processo)
         else:
             self.driver.switch_to.default_content()
+        sobrestado, mensagem = self.is_sobrestado(processo)
+        if sobrestado:
+            return sobrestado
         if self.clicar_botao('Sobrestar Processo'):
             ifrVisualizacao = WebDriverWait(self.driver, 3).until(
                 EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
@@ -276,6 +282,9 @@ class Sei:
     def remover_sobrestamento(self, processo: str = None) -> bool:
         if processo:
             self.go_to(processo)
+        sobrestado, mensagem = self.is_sobrestado(processo)
+        if not sobrestado:
+            return not sobrestado
         if self.clicar_botao('Remover Sobrestamento do Processo'):
             self.fechar_alerta()
             return True
@@ -288,36 +297,36 @@ class Sei:
             self.driver.switch_to.default_content()
         if self.clicar_botao('Agendar Publicação'):
             ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+                EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
             self.driver.switch_to.frame(ifrVisualizacao)
 
-            resumo_ementa_text_field = self.driver.find_element(By.ID, 'txaResumo')
+            resumo_ementa_text_field = self.driver.find_element(By.ID, self.config.get(self.sei, 'resumo_ementa_textfield'))
             resumo_ementa_text_field.clear()
             resumo_ementa_text_field.send_keys(resumo_ementa)
 
-            disponibilizacao = self.driver.find_element(By.ID, 'txtDisponibilizacao')
+            disponibilizacao = self.driver.find_element(By.ID, self.config.get(self.sei, 'data_disponibilizacao_textfield'))
             disponibilizacao.clear()
             disponibilizacao.send_keys(data_disponibilizacao)
 
             if dou:
-                select = Select(self.driver.find_element_by_id('selVeiculoIO'))
+                select = Select(self.driver.find_element(By.ID, self.config.get(self.sei, 'veiculo_textfield')))
                 select.select_by_visible_text('DOU')
 
                 select = Select(
-                    WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "selSecaoIO"))))
+                    WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'secao_textfield')))))
                 WebDriverWait(self.driver, 3).until(EC.presence_of_element_located(
                     (By.CSS_SELECTOR, "option[value='" + secao if secao else '3' + "']")))
                 select.select_by_visible_text(secao if secao else '3')
 
-                pagina_text_field = self.driver.find_element(By.ID, 'txtPaginaIO')
+                pagina_text_field = self.driver.find_element(By.ID, self.config.get(self.sei, 'pagina_textfield'))
                 pagina_text_field.clear()
                 pagina_text_field.send_keys(pagina if pagina else '')
 
-                disponibilizacao = self.driver.find_element(By.ID, 'txtDataIO')
+                disponibilizacao = self.driver.find_element(By.ID, self.config.get(self.sei, 'data_textfield'))
                 disponibilizacao.clear()
                 disponibilizacao.send_keys(data_disponibilizacao)
 
-            self.driver.find_element_by_id('btnSalvar').click()
+            self.driver.find_element_by_id(self.config.get(self.sei, 'salvar_button')).click()
 
             self.driver.switch_to.default_content()
             return True
@@ -330,10 +339,10 @@ class Sei:
             self.driver.switch_to.default_content()
         try:
             ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+                EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
             self.driver.switch_to.frame(ifrVisualizacao)
             ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
+                EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'arvore_frame'))))
             self.driver.switch_to.frame(ifrArvoreHtml)
             documento_conteudo = self.driver.find_element_by_xpath('/html/body').get_attribute('innerHTML')
             documento_conteudo = sub(r'\\n', '', documento_conteudo)  # retirar quebra de páginas
@@ -346,7 +355,7 @@ class Sei:
         finally:
             self.driver.switch_to.default_content()
 
-    def get_documento_element_by_id(self,id, documento: str = None) -> str:
+    def get_documento_element_by_id(self, id: str, documento: str = None) -> str:
         if documento:
             self.go_to(documento)
         else:
@@ -354,10 +363,10 @@ class Sei:
         try:
             if (self.__windows_after == self.__windows_before):
                 ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-                    EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+                    EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
                 self.driver.switch_to.frame(ifrVisualizacao)
                 ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
-                    EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
+                    EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'arvore_frame'))))
                 self.driver.switch_to.frame(ifrArvoreHtml)
             return self.driver.find_element_by_id(id).text
         except:
@@ -373,10 +382,10 @@ class Sei:
         try:
             if (self.__windows_after == self.__windows_before):
                 ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-                    EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+                    EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
                 self.driver.switch_to.frame(ifrVisualizacao)
                 ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
-                    EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
+                    EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'arvore_frame'))))
                 self.driver.switch_to.frame(ifrArvoreHtml)
             elements = self.driver.find_elements_by_id(id)
             return [element.text for element in elements]
@@ -385,7 +394,7 @@ class Sei:
         finally:
             self.driver.switch_to.default_content()
 
-    def get_documento_element_by_xpath(self, xpath: str,documento: str = None) -> str:
+    def get_documento_element_by_xpath(self, xpath: str, documento: str = None) -> str:
         if documento:
             self.go_to(documento)
         else:
@@ -393,10 +402,10 @@ class Sei:
         try:
             if(self.__windows_after == self.__windows_before):
                 ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-                    EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+                    EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
                 self.driver.switch_to.frame(ifrVisualizacao)
                 ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
-                    EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
+                    EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'arvore_frame'))))
                 self.driver.switch_to.frame(ifrArvoreHtml)
             return self.driver.find_element_by_xpath(xpath).text
         except:
@@ -412,10 +421,10 @@ class Sei:
         try:
             if (self.__windows_after == self.__windows_before):
                 ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-                    EC.presence_of_element_located((By.ID, "ifrVisualizacao")))
+                    EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
                 self.driver.switch_to.frame(ifrVisualizacao)
                 ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
-                    EC.presence_of_element_located((By.ID, "ifrArvoreHtml")))
+                    EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'arvore_frame'))))
                 self.driver.switch_to.frame(ifrArvoreHtml)
             elements = self.driver.find_elements_by_xpath(xpath)
             return [element.text for element in elements]
