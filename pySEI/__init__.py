@@ -6,7 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from re import search,sub
+from re import search, sub
 from getpass import getpass
 from msedge.selenium_tools import EdgeOptions
 from msedge.selenium_tools import Edge
