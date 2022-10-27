@@ -44,6 +44,7 @@ class Sei:
             if headless:
                 chrome_options.add_argument('--headless')
                 chrome_options.add_argument('--disable-gpu')
+                chrome_options.add_argument('--disable-software-rasterizer')
             self.driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), options=chrome_options)
         elif 'msedgedriver' in executable_path:
             edge_options = EdgeOptions()
