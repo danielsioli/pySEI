@@ -10,8 +10,8 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.keys import Keys
 from re import search, sub
 from getpass import getpass
-from msedge.selenium_tools import EdgeOptions
-from msedge.selenium_tools import Edge
+#from msedge.selenium_tools import EdgeOptions
+#from msedge.selenium_tools import Edge
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager as MsDriverManager
 import configparser
@@ -31,6 +31,7 @@ class Sei:
 
     def __init__(self, headless: bool = False, executable_path: str = 'chromedriver', sei_versao: int = 4, download_path = None):
         self.config = configparser.ConfigParser()
+        self.diretorio = None
         dir_path = os.path.dirname(os.path.realpath(__file__))
         with pkg_resources.open_text(package='pySEI', resource='config.ini') as f:
             self.config.read_file(f)
@@ -51,30 +52,35 @@ class Sei:
                 chrome_options.add_argument('--disable-gpu')
                 chrome_options.add_argument('--disable-software-rasterizer')
             if download_path:
+                self.diretorio = download_path
                 prefs = {'download.default_directory': download_path}
             else:
+                self.diretorio = dir_path
                 prefs = {'download.default_directory': dir_path}
+            prefs['download.prompt_for_download'] = False
+            prefs['download.directory_upgrade'] = True
+            prefs['plugins.always_open_pdf_externally'] = True
             chrome_options.add_experimental_option("prefs",prefs)
             executable_path = ChromeDriverManager().install()
             service = Service(executable_path=executable_path)
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
             #self.driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), options=chrome_options)
-        elif 'msedgedriver' in executable_path:
-            edge_options = EdgeOptions()
-            edge_options.use_chromium = True
-            edge_options.add_argument('enable-javascript')
-            edge_options.add_argument('window-size=1440,900')
-            edge_options.add_argument("disable-extensions")
-            edge_options.add_argument("proxy-server='direct://'")
-            edge_options.add_argument("proxy-bypass-list=*")
-            edge_options.add_argument("start-maximized")
-            edge_options.add_argument('disable-dev-shm-usage')
-            edge_options.add_argument('no-sandbox')
-            edge_options.add_argument('ignore-certificate-errors')
-            if headless:
-                edge_options.add_argument('headless')
-                edge_options.add_argument('disable-gpu')
-            self.driver = Edge(executable_path=MsDriverManager.install(), options=edge_options)
+        #elif 'msedgedriver' in executable_path:
+        #    edge_options = EdgeOptions()
+        #    edge_options.use_chromium = True
+        #    edge_options.add_argument('enable-javascript')
+        #    edge_options.add_argument('window-size=1440,900')
+        #    edge_options.add_argument("disable-extensions")
+        #    edge_options.add_argument("proxy-server='direct://'")
+        #    edge_options.add_argument("proxy-bypass-list=*")
+        #    edge_options.add_argument("start-maximized")
+        #    edge_options.add_argument('disable-dev-shm-usage')
+        #    edge_options.add_argument('no-sandbox')
+        #    edge_options.add_argument('ignore-certificate-errors')
+        #    if headless:
+        #        edge_options.add_argument('headless')
+        #        edge_options.add_argument('disable-gpu')
+        #    self.driver = Edge(executable_path=MsDriverManager.install(), options=edge_options)
 
     def __enter__(self):
         return self
@@ -82,7 +88,7 @@ class Sei:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def start_driver(self, url: str, usuario:str = None, senha:str = None, chave: str = None):
+    def start_driver(self, url: str, usuario:str = None, senha:str = None, chave: str = None, orgao: str = 'ANATEL'):
 
         if usuario == None:
             usuario = input('Digite o usuário: ')
@@ -104,7 +110,7 @@ class Sei:
         try:
             orgao_drop_down = Select(WebDriverWait(self.driver, 3).until(
                 EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'seleciona_orgao')))))
-            orgao_drop_down.select_by_visible_text('ANATEL')
+            orgao_drop_down.select_by_visible_text(orgao)
         except:
             None
         #selOrgao
@@ -235,9 +241,9 @@ class Sei:
 
     def clicar_botao(self, botao: str) -> bool:
         self.driver.switch_to.default_content()
-        ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-            EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
-        self.driver.switch_to.frame(ifrVisualizacao)
+        ifrConteudoVisualizacao = WebDriverWait(self.driver, 3).until(
+            EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'conteudo_visualizacao'))))
+        self.driver.switch_to.frame(ifrConteudoVisualizacao)
         arvore = WebDriverWait(self.driver, 3).until(
             EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'botoes'))))
         botoes = arvore.find_elements(By.XPATH, r'//*[@id="' + self.config.get(self.sei, 'botoes') + r'"]/a')
@@ -589,28 +595,61 @@ class Sei:
             return True
         return False
 
-    def get_conteudo_documento(self, documento: str = None):
+    def get_conteudo_documento(self, documento: str = None, tipo: str = 'html'):
         if documento:
             self.go_to(documento)
         else:
             self.driver.switch_to.default_content()
-        try:
+        if tipo == 'html':
+            try:
+                ifrConteudoVisualizacao = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'conteudo_visualizacao'))))
+                self.driver.switch_to.frame(ifrConteudoVisualizacao)
+                ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
+                self.driver.switch_to.frame(ifrVisualizacao)
+                #ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
+                #    EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'arvore_frame'))))
+                #self.driver.switch_to.frame(ifrArvoreHtml)
+                documento_conteudo = self.driver.find_element(By.XPATH, '/html/body').get_attribute('innerHTML')
+                documento_conteudo = sub(r'\\n', '', documento_conteudo)  # retirar quebra de páginas
+                documento_conteudo = sub(r'\s\s+?', ' ', documento_conteudo)  # tira espaços duplos
+                documento_conteudo = sub(r'&nbsp;', ' ', documento_conteudo)  # tira espaços duplos
+                documento_conteudo = documento_conteudo.strip()  # retirar quebras de páginas que tenham restado
+                return documento_conteudo
+            except:
+                raise Exception(f'Conteúdo do documento {documento} não encontrado.')
+            finally:
+                self.driver.switch_to.default_content()
+        elif tipo == 'pdf':
+            self.clicar_botao(botao='Consultar/Alterar Documento Externo')
+            ifrConteudoVisualizacao = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'conteudo_visualizacao'))))
+            self.driver.switch_to.frame(ifrConteudoVisualizacao)
             ifrVisualizacao = WebDriverWait(self.driver, 3).until(
                 EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
             self.driver.switch_to.frame(ifrVisualizacao)
-            ifrArvoreHtml = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'arvore_frame'))))
-            self.driver.switch_to.frame(ifrArvoreHtml)
-            documento_conteudo = self.driver.find_element_by_xpath('/html/body').get_attribute('innerHTML')
-            documento_conteudo = sub(r'\\n', '', documento_conteudo)  # retirar quebra de páginas
-            documento_conteudo = sub(r'\s\s+?', ' ', documento_conteudo)  # tira espaços duplos
-            documento_conteudo = sub(r'&nbsp;', ' ', documento_conteudo)  # tira espaços duplos
-            documento_conteudo = documento_conteudo.strip()  # retirar quebras de páginas que tenham restado
-            return documento_conteudo
-        except:
-            raise Exception('Conteúdo do documento %s não encontrado.' % documento)
-        finally:
-            self.driver.switch_to.default_content()
+            #/html/body/div[1]/div/div/form[2]/div[2]/table
+            tabela_anexos = self.driver.find_elements(By.XPATH, '/html/body/div[1]/div/div/form[2]/div[2]/table/tbody/tr')
+            #tabela_anexos = WebDriverWait(self.driver, 3).until(EC.presence_of_all_elements_located((By.ID, 'anexos')))
+            arquivos = []
+            for row in tabela_anexos:
+                nome_arquivo = (
+                    row.find_element(By.XPATH, "td[1]")
+                    .text
+                    .strip()
+                )
+                row.find_element(By.XPATH, 'td[8]/div/a').click()
+                arquivo = os.path.join(self.diretorio,nome_arquivo)
+                #arquivo = f'{self.diretorio}\\{nome_arquivo}'
+                contador = 0
+                import time
+                while not os.path.isfile(arquivo) and contador <= 3:
+                    time.sleep(1)
+                    contador += 1
+                arquivos.append(arquivo)
+            return arquivos
+
 
     def get_documento_element_by_id(self, id: str, documento: str = None) -> str:
         if documento:
@@ -627,7 +666,7 @@ class Sei:
                 self.driver.switch_to.frame(ifrArvoreHtml)
             return self.driver.find_element(By.ID, id).text
         except:
-            raise Exception('Conteúdo do documento %s não encontrado.' % documento)
+            raise Exception(f'Conteúdo do documento {documento} não encontrado.')
         finally:
             self.driver.switch_to.default_content()
 
@@ -647,7 +686,7 @@ class Sei:
             elements = self.driver.find_elements_by_id(id)
             return [element.text for element in elements]
         except:
-            raise Exception('Conteúdo do documento %s não encontrado.' % documento)
+            raise Exception(f'Conteúdo do documento {documento} não encontrado.')
         finally:
             self.driver.switch_to.default_content()
 
@@ -666,7 +705,7 @@ class Sei:
                 self.driver.switch_to.frame(ifrArvoreHtml)
             return self.driver.find_element_by_xpath(xpath).text
         except:
-            raise Exception('Conteúdo do documento %s não encontrado.' % documento)
+            raise Exception(f'Conteúdo do documento {documento} não encontrado.')
         finally:
             self.driver.switch_to.default_content()
 
@@ -686,7 +725,7 @@ class Sei:
             elements = self.driver.find_elements_by_xpath(xpath)
             return [element.text for element in elements]
         except:
-            raise Exception('Conteúdo do documento %s não encontrado.' % documento)
+            raise Exception(f'Conteúdo do documento {documento} não encontrado.')
         finally:
             self.driver.switch_to.default_content()
 
