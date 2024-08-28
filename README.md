@@ -1,4 +1,4 @@
-# pySEI
+﻿# pySEI
 Atualizado para interagir com o SEI 4.0
 
 Pacote para interagir com o SEI - Sistema Eletrônico de Informação. O pacote usa Selenium com o chromedriver ou Ms Edge.
