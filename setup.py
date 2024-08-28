@@ -7,7 +7,7 @@ with open(path.join(here, 'README.md')) as f:
 
 setup(
     name='pySEI',
-    version='1.4.1',
+    version='1.4.2',
     packages=find_packages(),
     package_data={'': ['config.ini']},
     url='https://github.com/danielsioli/pySEI',
@@ -18,7 +18,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     keywords='anatel,sei',
-    install_requires=['selenium', 'msedge-selenium-tools', 'webdriver_manager', 'ConfigParser','pandas'],
+    install_requires=['selenium', 'webdriver_manager', 'ConfigParser','pandas'],
     include_package_data=True,
     classifiers=[
         # How mature is this project? Common values are

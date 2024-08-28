@@ -621,34 +621,37 @@ class Sei:
                 raise Exception(f'Conteúdo do documento {documento} não encontrado.')
             finally:
                 self.driver.switch_to.default_content()
-        elif tipo == 'pdf':
-            self.clicar_botao(botao='Consultar/Alterar Documento Externo')
-            ifrConteudoVisualizacao = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'conteudo_visualizacao'))))
-            self.driver.switch_to.frame(ifrConteudoVisualizacao)
-            ifrVisualizacao = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
-            self.driver.switch_to.frame(ifrVisualizacao)
-            #/html/body/div[1]/div/div/form[2]/div[2]/table
-            tabela_anexos = self.driver.find_elements(By.XPATH, '/html/body/div[1]/div/div/form[2]/div[2]/table/tbody/tr')
-            #tabela_anexos = WebDriverWait(self.driver, 3).until(EC.presence_of_all_elements_located((By.ID, 'anexos')))
-            arquivos = []
-            for row in tabela_anexos:
-                nome_arquivo = (
-                    row.find_element(By.XPATH, "td[1]")
-                    .text
-                    .strip()
-                )
-                row.find_element(By.XPATH, 'td[8]/div/a').click()
-                arquivo = os.path.join(self.diretorio,nome_arquivo)
-                #arquivo = f'{self.diretorio}\\{nome_arquivo}'
-                contador = 0
-                import time
-                while not os.path.isfile(arquivo) and contador <= 3:
-                    time.sleep(1)
-                    contador += 1
-                arquivos.append(arquivo)
-            return arquivos
+        elif tipo == 'nato-digital':
+            try:
+                self.clicar_botao(botao='Consultar/Alterar Documento Externo')
+                ifrConteudoVisualizacao = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'conteudo_visualizacao'))))
+                self.driver.switch_to.frame(ifrConteudoVisualizacao)
+                ifrVisualizacao = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.ID, self.config.get(self.sei, 'visualizacao_frame'))))
+                self.driver.switch_to.frame(ifrVisualizacao)
+                tabela_anexos = self.driver.find_elements(By.XPATH, '/html/body/div[1]/div/div/form[2]/div[2]/table/tbody/tr')
+                arquivos = []
+                for row in tabela_anexos:
+                    nome_arquivo = (
+                        row.find_element(By.XPATH, "td[2]")
+                        .text
+                        .strip()
+                    )
+                    row.find_element(By.XPATH, 'td[8]/div/a').click()
+                    #arquivo = os.path.join(self.diretorio,nome_arquivo)
+                    arquivo = f'{self.diretorio}\\{nome_arquivo}'
+                    contador = 0
+                    import time
+                    while not os.path.isfile(arquivo) and contador <= 3:
+                        time.sleep(1)
+                        contador += 1
+                    arquivos.append(arquivo)
+                return arquivos
+            except:
+                raise Exception(f'Conteúdo do documento {documento} não encontrado.')
+            finally:
+                self.driver.switch_to.default_content()
 
 
     def get_documento_element_by_id(self, id: str, documento: str = None) -> str:
