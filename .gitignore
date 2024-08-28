@@ -1,3 +1,10 @@
 pySEI/Plano_de_Contas____PPP_3_V09112023__2_.xlsx
 Testes.ipynb
 secret.ini
+dist/pySEI-1.4-py3-none-any.whl
+dist/pysei-1.4.tar.gz
+pySEI.egg-info/dependency_links.txt
+pySEI.egg-info/PKG-INFO
+pySEI.egg-info/requires.txt
+pySEI.egg-info/SOURCES.txt
+pySEI.egg-info/top_level.txt
