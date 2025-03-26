@@ -1,0 +1,5 @@
+selenium==4.30.0
+webdriver_manager==4.0.2
+pandas==2.2.3
+tqdm==4.67.1
+setuptools==78.1.0
