@@ -90,6 +90,12 @@ try:
 except:
     print('Conteúdo não encontrado')
 ```
+
+Incluir documento em bloco de assinatura
+```
+sei.incluir_em_bloco(bloco=bloco, documento=documento)
+```
+
 Fechar o navegador
 ```
 sei.close()
