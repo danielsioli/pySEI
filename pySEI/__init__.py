@@ -278,7 +278,7 @@ class Sei:
             None
         return alerta
 
-    def set_interessados(self, processo: str, interessados:list) -> (bool, str):
+    def set_interessados(self, processo: str, interessados:list) -> tuple[bool, str]:
         if processo:
             self.go_to(processo)
         else:
@@ -414,8 +414,7 @@ class Sei:
                 self.driver.find_element(By.ID, 'sbmConfirmarIntimacao').click()
             self.driver.switch_to.default_content()
 
-
-    def criar_documento(self, tipo: str, meta: dict, processo: str = None) -> (bool, str):
+    def criar_documento(self, tipo: str, meta: dict, processo: str = None) -> tuple[bool, str]:
         if processo:
             self.go_to(processo)
         else:
@@ -500,7 +499,7 @@ class Sei:
             download.click()
         self.driver.switch_to.default_content()
 
-    def is_sobrestado(self, area: str = None, processo: str = None) -> (bool, str):
+    def is_sobrestado(self, area: str = None, processo: str = None) -> tuple[bool, str]:
         if processo:
             self.go_to(processo)
         else:
@@ -653,7 +652,6 @@ class Sei:
             finally:
                 self.driver.switch_to.default_content()
 
-
     def get_documento_element_by_id(self, id: str, documento: str = None) -> str:
         if documento:
             self.go_to(documento)
@@ -780,7 +778,6 @@ class Sei:
         self.driver.switch_to.default_content()
         return documentos
 
-
     def incluir_em_bloco(self, bloco:str = None, documento:str = None) -> bool:
         if documento:
             self.go_to(documento)
@@ -797,7 +794,6 @@ class Sei:
         self.fechar_alerta()
         self.driver.switch_to.default_content()
         return True
-
             
     def close(self, voltar: bool = True):
         if voltar and self.__area_inicial:

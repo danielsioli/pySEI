@@ -3,3 +3,4 @@ webdriver_manager==4.0.2
 pandas==2.2.3
 tqdm==4.67.1
 setuptools==78.1.0
+importlib_resources==6.5.2
